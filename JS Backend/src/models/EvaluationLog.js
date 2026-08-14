@@ -1,5 +1,21 @@
 import mongoose from 'mongoose';
 
+const evaluationMessageSchema = new mongoose.Schema({
+    sender: {
+        type: String,
+        enum: ['student', 'ai'],
+        required: true
+    },
+    text: {
+        type: String,
+        required: true
+    },
+    timestamp: {
+        type: Date,
+        default: Date.now
+    }
+});
+
 const evaluationLogSchema = new mongoose.Schema({
     studentId: {
         type: mongoose.Schema.Types.ObjectId,
@@ -44,6 +60,8 @@ const evaluationLogSchema = new mongoose.Schema({
         remedialHint: { type: String, default: '' },
         personalizedLearningPathNote: { type: String, default: '' }
     },
+    // Enables chat history for follow-up questions on this code evaluation
+    messages: [evaluationMessageSchema],
     timestamp: {
         type: Date,
         default: Date.now

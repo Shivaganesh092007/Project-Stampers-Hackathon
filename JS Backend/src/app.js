@@ -1,8 +1,13 @@
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import express from 'express'
+import express from 'express';
 
-const app=express();
+import userRoutes from './routes/user.routes.js';
+import pathwayRoutes from './routes/pathway.routes.js';
+import agentRoutes from './routes/agent.routes.js';
+import analyticsRoutes from './routes/analytics.routes.js';
+
+const app = express();
 
 app.use(cors({
     origin: process.env.CORS_ORIGIN || "http://localhost:5173",
@@ -13,6 +18,13 @@ app.use(express.json({ limit: "16kb" }));
 app.use(express.urlencoded({ extended: true, limit: "16kb" }));
 app.use(cookieParser());
 
+// Route Mount points
+app.use('/api/users', userRoutes);
+app.use('/api/pathway', pathwayRoutes);
+app.use('/api/agent', agentRoutes);
+app.use('/api/analytics', analyticsRoutes);
+
+// Global Error Handler
 app.use((err, req, res, next) => {
     const statusCode = err.statusCode || 500;
     const message = err.message || "Internal Server Error";

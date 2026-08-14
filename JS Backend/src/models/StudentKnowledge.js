@@ -1,9 +1,25 @@
 import mongoose from 'mongoose';
 
+const messageSchema = new mongoose.Schema({
+	sender: {
+		type: String,
+		enum: ['student', 'ai'],
+		required: true
+	},
+	text: {
+		type: String,
+		required: true
+	},
+	timestamp: {
+		type: Date,
+		default: Date.now
+	}
+});
+
 const misconceptionDetailSchema = new mongoose.Schema({
 	misconceptionTag: {
 		type: String,
-		required: true // e.g., 'OFF_BY_ONE', 'MUTATING_STATE_DIRECTLY', 'SCOPE_LEAK'
+		required: true 
 	},
 	description: {
 		type: String,
@@ -56,6 +72,10 @@ const studentKnowledgeSchema = new mongoose.Schema({
 	},
 	detectedMisconceptions: [
 		misconceptionDetailSchema
+	],
+	// Stores main chat history between student and Main Teacher AI Agent
+	messages: [
+		messageSchema
 	],
 	lastEvaluatedAt: {
 		type: Date

@@ -5,8 +5,30 @@ import User from '../models/User.js';
 import jwt from 'jsonwebtoken';
 
 /**
+ * Helper to generate and persist tokens
+ */
+const generateAccessAndRefreshTokens = async (userId) => {
+    try {
+        const user = await User.findById(userId);
+        const accessToken = user.generateAccessToken();
+        const refreshToken = user.generateRefreshToken();
+
+        user.refreshToken = refreshToken;
+        await user.save({ validateBeforeSave: false });
+
+        return { accessToken, refreshToken };
+    } catch (error) {
+        throw new ApiError(500, "Something went wrong while generating refresh and access token");
+    }
+};
+
+const cookieOptions = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production"
+};
+
+/**
  * POST /api/users/register
- * Registers a new student profile
  */
 export const registerUser = asyncHandler(async (req, res) => {
     const { name, email, leetcodeId, password } = req.body;
@@ -33,7 +55,6 @@ export const registerUser = asyncHandler(async (req, res) => {
 
 /**
  * POST /api/users/login
- * Simple student login and token generation
  */
 export const loginUser = asyncHandler(async (req, res) => {
     const { email, password } = req.body;
@@ -52,22 +73,91 @@ export const loginUser = asyncHandler(async (req, res) => {
         throw new ApiError(401, "Invalid student credentials");
     }
 
-    const token = jwt.sign(
-        { _id: user._id, email: user.email },
-        process.env.ACCESS_TOKEN_SECRET || "default_hackathon_secret",
-        { expiresIn: "1d" }
-    );
+    const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id);
 
     const loggedInUser = await User.findById(user._id).select("-password -refreshToken");
 
-    return res.status(200).json(
-        new ApiResponse(200, { user: loggedInUser, token }, "Login successful")
+    return res
+        .status(200)
+        .cookie("accessToken", accessToken, cookieOptions)
+        .cookie("refreshToken", refreshToken, cookieOptions)
+        .json(
+            new ApiResponse(
+                200,
+                { user: loggedInUser, accessToken, refreshToken },
+                "Login successful"
+            )
+        );
+});
+
+/**
+ * POST /api/users/refresh-token
+ */
+export const refreshAccessToken = asyncHandler(async (req, res) => {
+    const incomingRefreshToken = req.cookies?.refreshToken || req.body.refreshToken;
+
+    if (!incomingRefreshToken) {
+        throw new ApiError(401, "Unauthorized request: Refresh token missing");
+    }
+
+    try {
+        const decodedToken = jwt.verify(
+            incomingRefreshToken,
+            process.env.REFRESH_TOKEN_SECRET
+        );
+
+        const user = await User.findById(decodedToken?._id).select("+refreshToken");
+
+        if (!user) {
+            throw new ApiError(401, "Invalid refresh token");
+        }
+
+        if (incomingRefreshToken !== user.refreshToken) {
+            throw new ApiError(401, "Refresh token is expired or has been used");
+        }
+
+        const { accessToken, refreshToken: newRefreshToken } = await generateAccessAndRefreshTokens(user._id);
+
+        return res
+            .status(200)
+            .cookie("accessToken", accessToken, cookieOptions)
+            .cookie("refreshToken", newRefreshToken, cookieOptions)
+            .json(
+                new ApiResponse(
+                    200,
+                    { accessToken, refreshToken: newRefreshToken },
+                    "Access token refreshed successfully"
+                )
+            );
+    } catch (error) {
+        throw new ApiError(401, error?.message || "Invalid refresh token");
+    }
+});
+
+/**
+ * POST /api/users/logout
+ */
+export const logoutUser = asyncHandler(async (req, res) => {
+    await User.findByIdAndUpdate(
+        req.user._id,
+        {
+            $unset: {
+                refreshToken: 1
+            }
+        },
+        { new: true }
     );
+
+    return res
+        .status(200)
+        .clearCookie("accessToken", cookieOptions)
+        .clearCookie("refreshToken", cookieOptions)
+        .json(new ApiResponse(200, {}, "User logged out successfully"));
 });
 
 /**
  * GET /api/users/:studentId
- * Fetches student profile & metadata
+ * 
  */
 export const getUserProfile = asyncHandler(async (req, res) => {
     const { studentId } = req.params;

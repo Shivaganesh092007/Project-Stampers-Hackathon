@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Send, BookOpen, MessageSquare, Code, X, ChevronRight } from 'lucide-react';
 
-export default function AgentChat({ subtopic, studentId }) {
+export default function AgentChat({ subtopic, studentId, course }) {
   const [mainHistory, setMainHistory] = useState([]);
   const [mainInput, setMainInput] = useState('');
   const [isMainLoading, setIsMainLoading] = useState(false);
@@ -13,6 +13,8 @@ export default function AgentChat({ subtopic, studentId }) {
   const [threadInput, setThreadInput] = useState('');
   const [isThreadLoading, setIsThreadLoading] = useState(false);
 
+  const API_BASE = 'http://localhost:8000/api';
+
   useEffect(() => {
     // Reset state when subtopic changes
     setActiveThread(null);
@@ -20,45 +22,93 @@ export default function AgentChat({ subtopic, studentId }) {
     
     const initMainAgent = async () => {
       setIsMainLoading(true);
-      setMainHistory([]);
-      setTimeout(() => {
-        setMainHistory([
-          { 
-            id: 'msg_1', 
-            sender: 'ai', 
-            type: 'theory',
-            text: `Welcome to the lesson on **${subtopic.title}**.\n\n${subtopic.theoryContent || "Here we will cover the fundamentals."}` 
-          },
-          { 
-            id: 'msg_2', 
-            sender: 'ai', 
-            type: 'question',
-            text: `**Practice Question:**\n${subtopic.starterCode ? "Implement the solution based on the starter code provided." : "How would you approach solving this problem?"}`,
-            questionId: 'q_1'
-          }
-        ]);
+      try {
+        const histRes = await fetch(`${API_BASE}/agent/main/history/${studentId}/${subtopic._id}`);
+        const histData = await histRes.json();
+        
+        if (histData.data && histData.data.length > 0) {
+          const formattedHistory = histData.data.map((msg, index) => ({
+              id: `msg_${index}`,
+              sender: msg.sender,
+              type: index === histData.data.length - 1 && msg.sender === 'ai' ? 'question' : 'text',
+              text: msg.text,
+              questionId: 'q_1'
+          }));
+          setMainHistory(formattedHistory);
+          setIsMainLoading(false);
+          return;
+        }
+
+        // Initialize if history is empty
+        const response = await fetch(`${API_BASE}/agent/main/chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            studentId,
+            subtopicId: subtopic._id,
+            message: '',
+            course: course || "DSA",
+            presentTopic: course || "Topic",
+            presentSubtopic: subtopic.title
+          })
+        });
+        const data = await response.json();
+        
+        if (data.data && data.data.history) {
+            const formattedHistory = data.data.history.map((msg, index) => ({
+                id: `msg_${index}`,
+                sender: msg.sender,
+                type: index === data.data.history.length - 1 && msg.sender === 'ai' ? 'question' : 'text',
+                text: msg.text,
+                questionId: 'q_1'
+            }));
+            setMainHistory(formattedHistory);
+        }
+      } catch (error) {
+        console.error("Failed to initialize main agent", error);
+      } finally {
         setIsMainLoading(false);
-      }, 1000);
+      }
     };
     initMainAgent();
-  }, [subtopic]);
+  }, [subtopic, studentId, course]);
 
-  const handleSendMain = () => {
+  const handleSendMain = async () => {
     if (!mainInput.trim()) return;
     const userMsg = { id: Date.now().toString(), sender: 'student', text: mainInput, type: 'text' };
     setMainHistory(prev => [...prev, userMsg]);
     setMainInput('');
     setIsMainLoading(true);
 
-    setTimeout(() => {
-      setMainHistory(prev => [...prev, { 
-        id: Date.now().toString(), 
-        sender: 'ai', 
-        type: 'text', 
-        text: `I see you are asking about "${userMsg.text}". Let's break that down...` 
-      }]);
+    try {
+      const response = await fetch(`${API_BASE}/agent/main/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          studentId,
+          subtopicId: subtopic._id,
+          message: userMsg.text,
+          course: course || "DSA",
+          presentTopic: course || "Topic",
+          presentSubtopic: subtopic.title
+        })
+      });
+      const data = await response.json();
+      
+      if (data.data && data.data.reply) {
+        setMainHistory(prev => [...prev, { 
+          id: Date.now().toString(), 
+          sender: 'ai', 
+          type: 'question', 
+          text: data.data.reply,
+          questionId: 'q_1'
+        }]);
+      }
+    } catch (error) {
+      console.error("Failed to send message", error);
+    } finally {
       setIsMainLoading(false);
-    }, 1000);
+    }
   };
 
   const openThread = (questionId, title) => {
@@ -73,7 +123,7 @@ export default function AgentChat({ subtopic, studentId }) {
     }
   };
 
-  const handleSendThread = () => {
+  const handleSendThread = async () => {
     if (!threadInput.trim() || !activeThread) return;
     const qId = activeThread.questionId;
     const userMsg = { sender: 'student', text: threadInput, type: 'text' };
@@ -85,17 +135,59 @@ export default function AgentChat({ subtopic, studentId }) {
     setThreadInput('');
     setIsThreadLoading(true);
 
-    setTimeout(() => {
-      const responseText = threadTab === 'doubt' 
-        ? `Here is a hint for your doubt regarding: "${userMsg.text}". Try looking at the problem constraints.`
-        : `Evaluating your code: "${userMsg.text}". \n\nSyntax looks correct, but it might fail on edge cases.`;
-        
-      setThreadHistory(prev => ({
-        ...prev,
-        [qId]: [...(prev[qId] || []), { sender: 'ai', text: responseText, type: 'text' }]
-      }));
+    try {
+      if (threadTab === 'doubt') {
+        const response = await fetch(`${API_BASE}/agent/doubt/chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            studentId,
+            subtopicId: subtopic._id,
+            course: course || "DSA",
+            topic: course || "Topic",
+            subtopic: subtopic.title,
+            theoryResponse: mainHistory.map(m => m.text).join('\n'), // Pass main history as context
+            query: userMsg.text
+          })
+        });
+        const data = await response.json();
+        if (data.data && data.data.reply) {
+          setThreadHistory(prev => ({
+            ...prev,
+            [qId]: [...(prev[qId] || []), { sender: 'ai', text: data.data.reply, type: 'text' }]
+          }));
+        }
+      } else {
+        // Evaluation
+        const response = await fetch(`${API_BASE}/agent/evaluate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            studentId,
+            subtopicId: subtopic._id,
+            problemStatement: subtopic.title, // ideally should be actual problem statement
+            isDsa: (course || "DSA") === "DSA",
+            userSolution: userMsg.text,
+            userQuery: ""
+          })
+        });
+        const data = await response.json();
+        if (data.data) {
+          let responseText = `Score: ${data.data.masteryScore}\nStatus: ${data.data.status}\n\n${data.data.tutorReply || ''}`;
+          if (data.data.evaluationLog && !data.data.evaluationLog.isCorrect) {
+             responseText += `\n\nHints: ${data.data.evaluationLog.aiFeedback.remedialHint}`;
+          }
+          setThreadHistory(prev => ({
+            ...prev,
+            [qId]: [...(prev[qId] || []), { sender: 'ai', text: responseText, type: 'text' }]
+          }));
+        }
+      }
+    } catch (error) {
+      console.error("Failed to send thread message", error);
+    } finally {
       setIsThreadLoading(false);
-    }, 1000);
+    }
   };
 
   return (

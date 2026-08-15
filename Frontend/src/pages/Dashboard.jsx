@@ -45,7 +45,7 @@ export default function Dashboard() {
       
       {activeSubtopic ? (
         <div className="flex flex-1 overflow-hidden">
-          <AgentChat subtopic={activeSubtopic} studentId={studentId} />
+          <AgentChat subtopic={activeSubtopic} studentId={studentId} course={activeSubject} />
         </div>
       ) : (
         <div className="flex-1 flex flex-col items-center justify-center bg-surface/50">

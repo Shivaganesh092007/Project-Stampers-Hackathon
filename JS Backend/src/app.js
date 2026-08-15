@@ -24,6 +24,11 @@ app.use('/api/pathway', pathwayRoutes);
 app.use('/api/agent', agentRoutes);
 app.use('/api/analytics', analyticsRoutes);
 
+
+app.use((req, res) => {
+    res.status(404).json({ success: false, message: "Route not found" });
+});
+
 // Global Error Handler
 app.use((err, req, res, next) => {
     const statusCode = err.statusCode || 500;

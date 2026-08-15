@@ -7,50 +7,49 @@ const PYTHON_SERVICE_URL = process.env.PYTHON_SERVICE_URL || 'http://localhost:5
  * Executes Doubt Agent query with persistent MongoDB chat history
  */
 export const processDoubtAgent = async ({ studentId, subtopicId, course, topic, subtopic, theoryResponse, query }) => {
-  // 1. Retrieve or create chat history record
-  let chatRecord = await AgentChat.findOne({ studentId, subtopicId, agentType: 'doubt' });
+	// 1. Retrieve or create chat history record
+	let chatRecord = await AgentChat.findOne({ studentId, subtopicId,});
 
-  if (!chatRecord) {
-    chatRecord = await AgentChat.create({
-      studentId,
-      subtopicId,
-      agentType: 'doubt',
-      messages: []
-    });
-  }
+	if (!chatRecord) {
+		chatRecord = await AgentChat.create({
+			studentId,
+			subtopicId,
+			messages: []
+		});
+	}
 
-  // 2. Add current user message to local array before sending
-  const existingHistory = chatRecord.messages.slice(-10); // Take last 10 messages for context window
+	// 2. Add current user message to local array before sending
+	const existingHistory = chatRecord.messages.slice(-10); // Take last 10 messages for context window
 
-  // 3. Call Python Microservice
-  const pythonResponse = await axios.post(`${PYTHON_SERVICE_URL}/agent/doubt`, {
-    course,
-    topic,
-    subtopic,
-    theoryResponse,
-    query,
-    chat_history: existingHistory
-  });
+	// 3. Call Python Microservice
+	const pythonResponse = await axios.post(`${PYTHON_SERVICE_URL}/agent/doubt`, {
+		course,
+		topic,
+		subtopic,
+		theoryResponse,
+		query,
+		chat_history: existingHistory
+	});
 
-  const aiReplyText = pythonResponse.data.reply;
+	const aiReplyText = pythonResponse.data.reply;
 
-  // 4. Save both user query and AI response to MongoDB
-  chatRecord.messages.push(
-    { sender: 'student', text: query },
-    { sender: 'ai', text: aiReplyText }
-  );
-  await chatRecord.save();
+	// 4. Save both user query and AI response to MongoDB
+	chatRecord.messages.push(
+		{ sender: 'student', text: query },
+		{ sender: 'ai', text: aiReplyText }
+	);
+	await chatRecord.save();
 
-  return {
-    reply: aiReplyText,
-    fullHistory: chatRecord.messages
-  };
+	return {
+		reply: aiReplyText,
+		fullHistory: chatRecord.messages
+	};
 };
 
 /**
  * Fetches Chat History for any agent type
  */
-export const getAgentChatHistory = async (studentId, subtopicId, agentType = 'doubt') => {
-  const chatRecord = await AgentChat.findOne({ studentId, subtopicId, agentType });
-  return chatRecord ? chatRecord.messages : [];
+export const getAgentChatHistory = async (studentId, subtopicId,) => {
+	const chatRecord = await AgentChat.findOne({ studentId, subtopicId});
+	return chatRecord ? chatRecord.messages : [];
 };

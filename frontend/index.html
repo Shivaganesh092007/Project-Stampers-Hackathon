@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Agentic Learning Platform</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Main CSS -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Background Animated Elements -->
+    <div class="bg-shape shape-1"></div>
+    <div class="bg-shape shape-2"></div>
+    <div class="bg-shape shape-3"></div>
+
+    <!-- Course Setup Modal -->
+    <div id="course-setup-modal" class="modal-overlay">
+        <div class="glass-card modal-content">
+            <div class="logo-container" style="justify-content: center; margin-bottom: 24px;">
+                <div class="logo-icon">✨</div>
+                <h1 class="logo-text">AgenticLearn</h1>
+            </div>
+            <h2 style="text-align: center; margin-bottom: 16px;">What do you want to learn?</h2>
+            <p style="text-align: center; color: var(--text-muted); margin-bottom: 24px;">Enter a course name to generate your personalized AI curriculum.</p>
+            <input type="text" id="course-input" class="glass-input" placeholder="e.g. Data Structures and Algorithms" style="margin-bottom: 16px; font-size: 16px;">
+            <button id="generate-course-btn" class="btn primary-btn full-width">Generate Course Plan</button>
+            <div id="course-loading" class="loader hidden" style="margin-top: 24px;"></div>
+        </div>
+    </div>
+
+    <!-- Main Unified Interface -->
+    <div id="app-container" class="app-container hidden">
+        <!-- Sidebar Navigation (Course Plan) -->
+        <aside class="sidebar glass-panel">
+            <div class="logo-container">
+                <div class="logo-icon">✨</div>
+                <h1 class="logo-text" id="sidebar-course-name">Course</h1>
+            </div>
+            
+            <div class="course-plan-container">
+                <h3 style="margin-bottom: 16px; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted);">Curriculum</h3>
+                <div id="course-plan-list" class="main-nav">
+                    <!-- Dynamic content populated by JS -->
+                </div>
+            </div>
+
+            <div class="user-profile">
+                <div class="avatar">U</div>
+                <div class="user-info">
+                    <span class="username">Student</span>
+                    <span class="course">Pro Plan</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <header class="unified-header glass-card">
+                <div>
+                    <h2 id="current-topic-display">Current Topic: -</h2>
+                    <p id="current-subtopic-display" style="color: var(--text-muted);">Subtopic: -</p>
+                </div>
+                <button id="next-subtopic-btn" class="btn primary-btn hidden">Start Next Subtopic</button>
+            </header>
+            
+            <!-- Unified Chat & Code Area -->
+            <div class="unified-workspace">
+                <!-- Chat Window -->
+                <div class="glass-card chat-container unified-chat">
+                    <div class="chat-messages" id="unified-chat-messages">
+                        <div class="message system-message">
+                            <div class="avatar ai-avatar">🤖</div>
+                            <div class="bubble">Welcome! Generating your course curriculum...</div>
+                        </div>
+                    </div>
+                    <div class="chat-input-area">
+                        <input type="text" id="unified-chat-input" placeholder="Ask a doubt or talk to your mentor...">
+                        <button class="btn icon-btn send-btn" id="send-chat-btn">➤</button>
+                    </div>
+                </div>
+
+                <!-- Code Editor -->
+                <div class="glass-card editor-container">
+                    <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center;">
+                        <h3>Practice Workspace</h3>
+                    </div>
+                    <textarea id="unified-code-editor" class="glass-input code-input" placeholder="Write your Python solution here..."></textarea>
+                    
+                    <div class="editor-footer">
+                        <input type="text" id="unified-code-query" class="glass-input" placeholder="Optional: Ask a specific question about your code..." style="flex: 1; border-radius: var(--radius-sm); padding: 10px;">
+                        <button id="submit-code-btn" class="btn primary-btn">Submit & Verify</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script type="module" src="app.js"></script>
+</body>
+</html>

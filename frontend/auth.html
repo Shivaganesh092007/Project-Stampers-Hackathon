@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authentication - AgenticLearn</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .auth-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .auth-card {
+            width: 100%;
+            max-width: 400px;
+            padding: 40px;
+        }
+        .auth-tabs {
+            display: flex;
+            margin-bottom: 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .auth-tab {
+            flex: 1;
+            text-align: center;
+            padding: 12px;
+            cursor: pointer;
+            color: var(--text-muted);
+            transition: var(--transition-fast);
+            font-weight: 500;
+        }
+        .auth-tab.active {
+            color: var(--text-light);
+            border-bottom: 2px solid var(--primary);
+        }
+        .auth-form {
+            display: none;
+        }
+        .auth-form.active {
+            display: block;
+        }
+        .auth-input-group {
+            margin-bottom: 16px;
+        }
+        .auth-input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: var(--text-light);
+        }
+        .error-message {
+            color: #ef4444;
+            font-size: 14px;
+            margin-top: 8px;
+            text-align: center;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-shape shape-1"></div>
+    <div class="bg-shape shape-2"></div>
+    <div class="bg-shape shape-3"></div>
+
+    <div class="auth-container">
+        <div class="glass-card auth-card">
+            <div class="logo-container" style="justify-content: center; margin-bottom: 32px;">
+                <div class="logo-icon">✨</div>
+                <h1 class="logo-text">AgenticLearn</h1>
+            </div>
+
+            <div class="auth-tabs">
+                <div class="auth-tab active" id="tab-login">Log In</div>
+                <div class="auth-tab" id="tab-signup">Sign Up</div>
+            </div>
+
+            <!-- Login Form -->
+            <form id="login-form" class="auth-form active">
+                <div class="auth-input-group">
+                    <label for="login-email">Email Address</label>
+                    <input type="email" id="login-email" class="glass-input full-width" required>
+                </div>
+                <div class="auth-input-group">
+                    <label for="login-password">Password</label>
+                    <input type="password" id="login-password" class="glass-input full-width" required>
+                </div>
+                <button type="submit" class="btn primary-btn full-width" id="login-btn">
+                    <span>Log In</span>
+                </button>
+                <div id="login-error" class="error-message"></div>
+            </form>
+
+            <!-- Signup Form -->
+            <form id="signup-form" class="auth-form">
+                <div class="auth-input-group">
+                    <label for="signup-name">Full Name</label>
+                    <input type="text" id="signup-name" class="glass-input full-width" required>
+                </div>
+                <div class="auth-input-group">
+                    <label for="signup-email">Email Address</label>
+                    <input type="email" id="signup-email" class="glass-input full-width" required>
+                </div>
+                <div class="auth-input-group">
+                    <label for="signup-password">Password</label>
+                    <input type="password" id="signup-password" class="glass-input full-width" required>
+                </div>
+                <button type="submit" class="btn primary-btn full-width" id="signup-btn">
+                    <span>Create Account</span>
+                </button>
+                <div id="signup-error" class="error-message"></div>
+                <div id="signup-success" style="color: #22c55e; font-size: 14px; margin-top: 8px; text-align: center; display: none;">
+                    Account created! Check your email to verify.
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Load Supabase as ES Module -->
+    <script type="module" src="auth.js"></script>
+</body>
+</html>
